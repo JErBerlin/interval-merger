@@ -23,6 +23,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"regexp"
@@ -58,7 +59,7 @@ func main() {
 
 	// Obs: we assume input correctly formatted for speed
 	// for validation, use ReadIntervalsWithValidation
-	intervals, err := ReadIntervals()
+	intervals, err := ReadIntervals(os.Stdin)
 	if err != nil {
 		log.Fatal("Error reading intervals:", err)
 	}
@@ -104,9 +105,8 @@ func mergeBySort(intervals []Interval) []Interval {
 	return merged
 }
 
-func ReadIntervals() ([]Interval, error) {
-	// Read input intervals from stdin.
-	scanner := bufio.NewScanner(os.Stdin)
+func ReadIntervals(r io.Reader) ([]Interval, error) {
+	scanner := bufio.NewScanner(r)
 	var intervals []Interval
 
 	for scanner.Scan() {
