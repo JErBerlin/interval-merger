@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-# File: generate_tests.sh
+#!/bin/bash
 
 generate_test_file() {
     local range=$1
@@ -22,19 +21,19 @@ generate_test_file() {
 
     case $size in
         xs)
-            num_intervals=10
+            num_points=5
             ;;
         s)
-            num_intervals=50
+            num_points=25
             ;;
         m)
-            num_intervals=200
+            num_points=100
             ;;
         l)
-            num_intervals=5000
+            num_points=2500
             ;;
         xl)
-            num_intervals=50000
+            num_points=25000
             ;;
         *)
             echo "Invalid size!"
@@ -50,9 +49,16 @@ generate_test_file() {
     > $test_file_path
     > $expected_file_path
 
-    for (( i=0; i<$num_intervals; i++ )); do
+    for (( i=0; i<$num_points; i++ )); do
         point=$((RANDOM % (b - a + 1) + a))
-        echo "[$a,$point] [$point,$b] " >> $test_file_path
+        
+        a_i=$((RANDOM % (point - a + 1) + a))
+        b_i=$((RANDOM % (b - point + 1) + point))
+
+        a_i_next=$((RANDOM % (point - a + 1) + a))
+        b_i_next=$((RANDOM % (b - point + 1) + point))
+        
+        echo "[$a_i,$b_i] [$a_i_next,$b_i_next] " >> $test_file_path
     done
 
     echo "[$a,$b]" > $expected_file_path
