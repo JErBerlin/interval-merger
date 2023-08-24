@@ -49,7 +49,12 @@ generate_test_file() {
     > $test_file_path
     > $expected_file_path
 
-    for (( i=0; i<$num_points; i++ )); do
+    # Guaranteeing at least one interval starts at a and one ends at b
+    point1=$((RANDOM % (b - a + 1) + a))
+    point2=$((RANDOM % (b - a + 1) + a))
+    printf "[%d,%d] [%d,%d] " $a $point1 $point2 $b >> $test_file_path
+
+    for (( i=0; i<$num_points-2; i++ )); do
         point=$((RANDOM % (b - a + 1) + a))
         
         a_i=$((RANDOM % (point - a + 1) + a))
