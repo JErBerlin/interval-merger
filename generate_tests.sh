@@ -58,8 +58,12 @@ generate_test_file() {
         a_i_next=$((RANDOM % (point - a + 1) + a))
         b_i_next=$((RANDOM % (b - point + 1) + point))
         
-        echo "[$a_i,$b_i] [$a_i_next,$b_i_next] " >> $test_file_path
+        # Append to the same line for the test file
+        printf "[%d,%d] [%d,%d] " $a_i $b_i $a_i_next $b_i_next >> $test_file_path
     done
+
+    # Add newline to the end of the test file
+    echo "" >> $test_file_path
 
     echo "[$a,$b]" > $expected_file_path
 }
