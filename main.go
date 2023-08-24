@@ -136,3 +136,42 @@ func ReadIntervals() ([]Interval, error) {
 
 	return intervals, scanner.Err()
 }
+
+func ReadIntervalsWithValidation() ([]Interval, error) {
+	// Read input intervals from stdin.
+	scanner := bufio.NewScanner(os.Stdin)
+	var intervals []Interval
+
+	// Compile the regex outside the loop
+	re := regexp.MustCompile(`\[(\d+),(\d+)\](?: \[\d+,\d+\])*`)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Validate the whole line against the regex
+		if !re.MatchString(line) {
+			return nil, fmt.Errorf("invalid interval format in line: %s", line)
+		}
+
+		// Extract all valid matches
+		matches := re.FindAllStringSubmatch(line, -1)
+
+		// Convert matches to Interval type
+		for _, match := range matches {
+			a, errA := strconv.Atoi(match[1])
+			b, errB := strconv.Atoi(match[2])
+
+			if errA != nil || errB != nil {
+				return nil, fmt.Errorf("invalid numbers in interval: %s", match[0])
+			}
+
+			if a > b {
+				return nil, fmt.Errorf("invalid interval: start %d is greater than end %d", a, b)
+			}
+
+			intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
+		}
+	}
+
+	return intervals, scanner.Err()
+}
