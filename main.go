@@ -38,12 +38,15 @@ func main() {
 	// Read input intervals from stdin.
 	scanner := bufio.NewScanner(os.Stdin)
 	var intervals []Interval
+type Intervals []Interval
 
 	for scanner.Scan() {
 		line := scanner.Text()
+func (i Intervals) String() string {
 
 		// TODO: validate input format
 		parts := strings.Split(line, " ")
+	var s strings.Builder
 
 		// Convert each interval in string format to Interval type.
 		for _, part := range parts {
@@ -51,9 +54,16 @@ func main() {
 			if part == "" {
 				continue
 			}
+	// concatenate strings efficiently with strings builder
+	for _, interval := range i {
+		s.WriteString(fmt.Sprintf("[%d,%d] ", interval.a, interval.b))
+	}
+	s.WriteString("\n")
 
 			intervalContent := strings.Trim(part, "[]")
 			intervalPoints := strings.Split(intervalContent, ",")
+	return s.String()
+}
 
 			// TODO: validate integer numbers / handle conversion error
 			a, _ := strconv.Atoi(intervalPoints[0])
