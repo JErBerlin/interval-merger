@@ -21,8 +21,11 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"log"
 	"os"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -34,55 +37,41 @@ type Interval struct {
 	b int32
 }
 
-func main() {
-	// Read input intervals from stdin.
-	scanner := bufio.NewScanner(os.Stdin)
-	var intervals []Interval
 type Intervals []Interval
 
-	for scanner.Scan() {
-		line := scanner.Text()
 func (i Intervals) String() string {
 
-		// TODO: validate input format
-		parts := strings.Split(line, " ")
 	var s strings.Builder
 
-		// Convert each interval in string format to Interval type.
-		for _, part := range parts {
-			// discard empty parts (extra spaces or newline)
-			if part == "" {
-				continue
-			}
 	// concatenate strings efficiently with strings builder
 	for _, interval := range i {
 		s.WriteString(fmt.Sprintf("[%d,%d] ", interval.a, interval.b))
 	}
 	s.WriteString("\n")
 
-			intervalContent := strings.Trim(part, "[]")
-			intervalPoints := strings.Split(intervalContent, ",")
 	return s.String()
 }
 
-			// TODO: validate integer numbers / handle conversion error
-			a, _ := strconv.Atoi(intervalPoints[0])
-			b, _ := strconv.Atoi(intervalPoints[1])
-			intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
-		}
+func main() {
+
+	// Read input intervals from stdin.
+
+	// Obs: we assume input correctly formatted for speed
+	// for validation, use ReadIntervalsWithValidation
+	intervals, err := ReadIntervals()
+	if err != nil {
+		log.Fatal("Error reading intervals:", err)
 	}
 
-	// Merge overlapping intervals.
+	// Merge overlapping intervals using sort and merge.
 	merged := mergeBySort(intervals)
 
-	// Print the merged intervals.
-	for _, interval := range merged {
-		fmt.Printf("[%d,%d] ", interval.a, interval.b)
-	}
-	fmt.Println()
+	// Output to stdout using Stringer of Intervals
+	fmt.Println(Intervals(merged))
 }
 
 // mergeBySort takes a list of intervals, sorts them by start (a), and merges any overlapping intervals.
+// TODO: use type Intervals as argument, or define as a method
 func mergeBySort(intervals []Interval) []Interval {
 	if len(intervals) == 0 {
 		return nil
@@ -113,4 +102,37 @@ func mergeBySort(intervals []Interval) []Interval {
 	}
 
 	return merged
+}
+
+func ReadIntervals() ([]Interval, error) {
+	// Read input intervals from stdin.
+	scanner := bufio.NewScanner(os.Stdin)
+	var intervals []Interval
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		parts := strings.Split(line, " ")
+
+		// Convert each interval in string format to Interval type.
+		for _, part := range parts {
+			// allow for extra spaces without error
+			part = strings.Trim(part, " ")
+			if len(part) == 0 {
+				continue
+			}
+
+			intervalStr := strings.Trim(part, "[]")
+			intervalPoints := strings.Split(intervalStr, ",")
+
+			a, _ := strconv.Atoi(intervalPoints[0])
+			b, _ := strconv.Atoi(intervalPoints[1])
+			intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
+		}
+	}
+
+	if len(intervals) == 0 {
+		return nil, errors.New("read intervals: could not read any interval")
+	}
+
+	return intervals, scanner.Err()
 }
