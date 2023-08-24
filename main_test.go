@@ -19,7 +19,7 @@ func TestEndToEnd(t *testing.T) {
 	// Iterate over range and size patterns
 	for _, rangePattern := range rangePatterns {
 		for _, sizePattern := range sizePatterns {
-			testFileName := fmt.Sprintf("valid.%s.%s.txt", rangePattern, sizePattern)
+			testFileName := fmt.Sprintf("%s.%s.txt", rangePattern, sizePattern)
 			expectedFileName := testFileName // since they share the same name
 
 			testFilePath := fmt.Sprintf("%s%s", TestFilesPath, testFileName)
