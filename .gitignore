@@ -1,4 +1,5 @@
 interval-merger
 testdata/
 testdata/expected/
+testdata_old/
 .main.go.swp
