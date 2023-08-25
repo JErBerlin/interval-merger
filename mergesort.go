@@ -28,9 +28,7 @@ func (i Intervals) String() string {
 }
 
 // mergeBySort takes a list of intervals, sorts them by start (a), and merges any overlapping intervals.
-// TODO: use type Intervals as argument, or define function as its method
-// TODO: make function exported if needed for tests or new package
-func mergeBySort(intervals []Interval) []Interval {
+func MergeBySort(intervals []Interval) []Interval {
 	if len(intervals) == 0 {
 		return nil
 	}
@@ -40,24 +38,21 @@ func mergeBySort(intervals []Interval) []Interval {
 		return intervals[i].a < intervals[j].a
 	})
 
-	// Initialize the merged intervals list with the first interval.
-	merged := []Interval{intervals[0]}
+	// Use a pointer to keep track of where we are in the merged result
+	index := 0
 
 	// Iterate through the sorted intervals and merge any overlapping ones.
 	for _, interval := range intervals[1:] {
-		last := merged[len(merged)-1]
-
-		// If the current interval overlaps with the last merged interval, merge them.
-		if interval.a <= last.b {
-			if interval.b > last.b {
-				last.b = interval.b
-				// TODO: check if next line can be optimised
-				merged[len(merged)-1] = last
+		if interval.a <= intervals[index].b {
+			// Merge the intervals
+			if interval.b > intervals[index].b {
+				intervals[index].b = interval.b
 			}
 		} else {
-			merged = append(merged, interval)
+			index++
+			intervals[index] = interval
 		}
 	}
 
-	return merged
+	return intervals[:index+1]
 }
