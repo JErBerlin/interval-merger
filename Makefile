@@ -21,5 +21,5 @@ build:
 	@go build
 
 run:
-	@./intervals_merger || go run
+	@./interval-merger || go run main.go
 
