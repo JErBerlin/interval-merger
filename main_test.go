@@ -40,7 +40,7 @@ func TestEndToEnd(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Error reading intervals from %s: %s", testFilePath, err)
 			}
-			merged := mergeBySort(intervals)
+			merged := MergeBySort(intervals)
 
 			// Read expected result
 			expectedFile, _ := os.Open(expectedFilePath)

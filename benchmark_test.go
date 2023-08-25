@@ -22,7 +22,7 @@ func benchmarkMergeBySort(file string, b *testing.B) {
 
 	b.Run(file, func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			mergeBySort(data)
+			MergeBySort(data)
 		}
 	})
 }
