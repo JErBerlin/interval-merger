@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -31,10 +30,8 @@ func ReadIntervals(r io.Reader) ([]Interval, error) {
 		line, isPrefix, err := reader.ReadLine()
 		if err != nil {
 			if err == io.EOF {
-				log.Println("found EOF in read loop:", err)
 				break
 			}
-			log.Println("found not EOF error in read loop:", err)
 			return nil, err
 		}
 
