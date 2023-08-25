@@ -105,5 +105,9 @@ func ReadIntervalsWithValidation() ([]Interval, error) {
 		}
 	}
 
-	return intervals, scanner.Err()
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading input: %w", err)
+	}
+
+	return intervals, nil
 }
