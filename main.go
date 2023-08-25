@@ -112,7 +112,7 @@ func ReadIntervals(r io.Reader) ([]Interval, error) {
 	// Read the first line to get the number of intervals
 	line, _, err := reader.ReadLine()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not read first line: %w", err)
 	}
 	numIntervals, err := strconv.Atoi(string(line))
 	if err != nil {
@@ -123,8 +123,18 @@ func ReadIntervals(r io.Reader) ([]Interval, error) {
 	for i := 0; i < numIntervals; i++ {
 		line, isPrefix, err := reader.ReadLine()
 		if err != nil {
+			if err == io.EOF {
+				log.Println("found EOF in read loop:", err)
+				break // end of the file reached
+			}
+			log.Println("found not EOF error in read loop:", err)
 			return nil, err
 		}
+
+		if len(line) == 0 {
+			break // no content line, end of manual input
+		}
+
 		if isPrefix {
 			// The line is too long, and we are only getting a fragment.
 			// This shouldn't happen as intervals should fit on one line.
