@@ -18,6 +18,8 @@ func benchmarkMergeBySort(file string, b *testing.B) {
 		b.Fatalf("Failed to read intervals from file %s: %v", file, err)
 	}
 
+	b.ReportAllocs() // memory usage
+
 	b.ResetTimer() // reset the timer after reading from the file
 
 	b.Run(file, func(b *testing.B) {

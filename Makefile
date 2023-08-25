@@ -1,6 +1,6 @@
 # Makefile
 
-.PHONY: generate_tests test benchmark build run
+.PHONY: generate_tests test benchmark benchmem build run
 
 generate_tests: 
 	# Generate some test files to run the end to end tests and benchmarks
@@ -16,6 +16,9 @@ test:
 
 benchmark:
 	@go test -bench .
+
+benchmem:
+	@go test -bench=. -benchmem
 
 build:
 	@go build
