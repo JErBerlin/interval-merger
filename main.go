@@ -106,35 +106,53 @@ func mergeBySort(intervals []Interval) []Interval {
 }
 
 func ReadIntervals(r io.Reader) ([]Interval, error) {
-	scanner := bufio.NewScanner(r)
+	reader := bufio.NewReader(r)
 	var intervals []Interval
 
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Split(line, " ")
+	// Read the first line to get the number of intervals
+	line, _, err := reader.ReadLine()
+	if err != nil {
+		return nil, err
+	}
+	numIntervals, err := strconv.Atoi(string(line))
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing the number of intervals: %w", err)
+	}
 
-		// Convert each interval in string format to Interval type.
-		for _, part := range parts {
-			// allow for extra spaces without error
-			part = strings.Trim(part, " ")
-			if len(part) == 0 {
-				continue
-			}
-
-			intervalStr := strings.Trim(part, "[]")
-			intervalPoints := strings.Split(intervalStr, ",")
-
-			a, _ := strconv.Atoi(intervalPoints[0])
-			b, _ := strconv.Atoi(intervalPoints[1])
-			intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
+	// Read each subsequent line as an interval
+	for i := 0; i < numIntervals; i++ {
+		line, isPrefix, err := reader.ReadLine()
+		if err != nil {
+			return nil, err
 		}
+		if isPrefix {
+			// The line is too long, and we are only getting a fragment.
+			// This shouldn't happen as intervals should fit on one line.
+			return nil, errors.New("Encountered an unexpectedly long line for an interval.")
+		}
+
+		part := strings.TrimSpace(string(line))
+		intervalStr := strings.Trim(part, "[]")
+		intervalPoints := strings.Split(intervalStr, ",")
+
+		a, errA := strconv.Atoi(intervalPoints[0])
+		if errA != nil {
+			return nil, fmt.Errorf("Error converting string %s to integer: %w", intervalPoints[0], errA)
+		}
+
+		b, errB := strconv.Atoi(intervalPoints[1])
+		if errB != nil {
+			return nil, fmt.Errorf("Error converting string %s to integer: %w", intervalPoints[1], errB)
+		}
+
+		intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
 	}
 
 	if len(intervals) == 0 {
 		return nil, errors.New("read intervals: could not read any interval")
 	}
 
-	return intervals, scanner.Err()
+	return intervals, nil
 }
 
 func ReadIntervalsWithValidation() ([]Interval, error) {
