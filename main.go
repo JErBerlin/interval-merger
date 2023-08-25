@@ -4,11 +4,14 @@
    Description:
    This program computes the set union of overlapping integer intervals provided as string input.
 
-   Assumptions:
+   Assumptions and technical decisions:
    - Intervals are provided in the form [a,b], where a and b are integers, representable as int32.
-   - The set of intervals to merge are provided from stdin in string form, as a line of space-separated intervals.
+   - The set of intervals to merge are provided from stdin, one interval for each line>
+   -- the first line of the input will indicate the maximum lines with intervals to be read
+   -- the input can be ended with an EOF (for redirected input files)
+   -- the indicated lines will be read or until an EOF is found, without causing an execution error
    - The start (a) of an interval is always less than or equal to its end (b).
-   - The number of intervals in the input are representable by the positiv part of an int32.
+   - The number of intervals in the input are representable by the positiv part of an int32
 
 	Stragety:
    - The program uses a sorting and merging algorithm to compute the union of intervals.
@@ -20,38 +23,10 @@
 package main
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
 )
-
-// Interval represents a numeric range with a start (a) and end (b).
-type Interval struct {
-	a int32
-	b int32
-}
-
-type Intervals []Interval
-
-func (i Intervals) String() string {
-
-	var s strings.Builder
-
-	// concatenate strings efficiently with strings builder
-	for _, interval := range i {
-		s.WriteString(fmt.Sprintf("[%d,%d] ", interval.a, interval.b))
-	}
-	s.WriteString("\n")
-
-	return s.String()
-}
 
 func main() {
 
@@ -61,7 +36,7 @@ func main() {
 	// for validation, use ReadIntervalsWithValidation
 	intervals, err := ReadIntervals(os.Stdin)
 	if err != nil {
-		log.Fatal("Error reading intervals:", err)
+		log.Fatal("Error reading intervals: ", err)
 	}
 
 	// Merge overlapping intervals using sort and merge.
@@ -69,137 +44,4 @@ func main() {
 
 	// Output to stdout using Stringer of Intervals
 	fmt.Println(Intervals(merged))
-}
-
-// mergeBySort takes a list of intervals, sorts them by start (a), and merges any overlapping intervals.
-// TODO: use type Intervals as argument, or define as a method
-func mergeBySort(intervals []Interval) []Interval {
-	if len(intervals) == 0 {
-		return nil
-	}
-
-	// Sort intervals by start (a).
-	sort.Slice(intervals, func(i, j int) bool {
-		return intervals[i].a < intervals[j].a
-	})
-
-	// Initialize the merged intervals list with the first interval.
-	merged := []Interval{intervals[0]}
-
-	// Iterate through the sorted intervals and merge any overlapping ones.
-	for _, interval := range intervals[1:] {
-		last := merged[len(merged)-1]
-
-		// If the current interval overlaps with the last merged interval, merge them.
-		if interval.a <= last.b {
-			if interval.b > last.b {
-				last.b = interval.b
-				// TODO: check next line, necessary?
-				merged[len(merged)-1] = last
-			}
-		} else {
-			merged = append(merged, interval)
-		}
-	}
-
-	return merged
-}
-
-func ReadIntervals(r io.Reader) ([]Interval, error) {
-	reader := bufio.NewReader(r)
-	var intervals []Interval
-
-	// Read the first line to get the number of intervals
-	line, _, err := reader.ReadLine()
-	if err != nil {
-		return nil, fmt.Errorf("could not read first line: %w", err)
-	}
-	numIntervals, err := strconv.Atoi(string(line))
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing the number of intervals: %w", err)
-	}
-
-	// Read each subsequent line as an interval
-	for i := 0; i < numIntervals; i++ {
-		line, isPrefix, err := reader.ReadLine()
-		if err != nil {
-			if err == io.EOF {
-				log.Println("found EOF in read loop:", err)
-				break // end of the file reached
-			}
-			log.Println("found not EOF error in read loop:", err)
-			return nil, err
-		}
-
-		if len(line) == 0 {
-			break // no content line, end of manual input
-		}
-
-		if isPrefix {
-			// The line is too long, and we are only getting a fragment.
-			// This shouldn't happen as intervals should fit on one line.
-			return nil, errors.New("Encountered an unexpectedly long line for an interval.")
-		}
-
-		part := strings.TrimSpace(string(line))
-		intervalStr := strings.Trim(part, "[]")
-		intervalPoints := strings.Split(intervalStr, ",")
-
-		a, errA := strconv.Atoi(intervalPoints[0])
-		if errA != nil {
-			return nil, fmt.Errorf("Error converting string %s to integer: %w", intervalPoints[0], errA)
-		}
-
-		b, errB := strconv.Atoi(intervalPoints[1])
-		if errB != nil {
-			return nil, fmt.Errorf("Error converting string %s to integer: %w", intervalPoints[1], errB)
-		}
-
-		intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
-	}
-
-	if len(intervals) == 0 {
-		return nil, errors.New("read intervals: could not read any interval")
-	}
-
-	return intervals, nil
-}
-
-func ReadIntervalsWithValidation() ([]Interval, error) {
-	// Read input intervals from stdin.
-	scanner := bufio.NewScanner(os.Stdin)
-	var intervals []Interval
-
-	// Compile the regex outside the loop
-	re := regexp.MustCompile(`\[(\d+),(\d+)\](?: \[\d+,\d+\])*`)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		// Validate the whole line against the regex
-		if !re.MatchString(line) {
-			return nil, fmt.Errorf("invalid interval format in line: %s", line)
-		}
-
-		// Extract all valid matches
-		matches := re.FindAllStringSubmatch(line, -1)
-
-		// Convert matches to Interval type
-		for _, match := range matches {
-			a, errA := strconv.Atoi(match[1])
-			b, errB := strconv.Atoi(match[2])
-
-			if errA != nil || errB != nil {
-				return nil, fmt.Errorf("invalid numbers in interval: %s", match[0])
-			}
-
-			if a > b {
-				return nil, fmt.Errorf("invalid interval: start %d is greater than end %d", a, b)
-			}
-
-			intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
-		}
-	}
-
-	return intervals, scanner.Err()
 }
