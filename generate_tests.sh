@@ -1,5 +1,52 @@
 #!/bin/bash
 
+# Generate anchor points based on max_range and num_anchor_points
+generate_anchor_points() {
+    local max_range=$1
+    local num_points=$2
+
+    local interval_distance=$(( max_range / (num_points - 1) ))
+
+    local anchor_points=""
+    for (( i=0; i<num_points; i++ )); do
+        local anchor_point=$(( interval_distance * i ))
+        anchor_points+="$anchor_point "
+    done
+
+    echo "$anchor_points"
+}
+
+# Generate covering intervals based on the max_range, num_points and generated anchor points
+generate_covering_intervals() {
+    local max_range=$1
+    local num_points=$2
+    local anchor_points_output=$3
+
+    # Convert the anchor_points_output to an array
+    local anchor_points=($anchor_points_output)
+
+    # Calculate the average distance between anchor points
+    local avg_distance=$(( max_range / (num_points - 1) ))
+
+    local intervals=""
+    for anchor_point in "${anchor_points[@]}"; do
+        local radius=$(( (avg_distance / 2) + (RANDOM % avg_distance) ))
+        local start=$(( anchor_point - radius ))
+        if (( start < 0 )); then
+            start=0
+        fi
+
+        local end=$(( anchor_point + radius ))
+        if (( end > max_range )); then
+            end=$max_range
+        fi
+
+        intervals+="[$start,$end] "
+    done
+
+    echo "$intervals"
+}
+
 generate_test_file() {
     local range=$1
     local size=$2
@@ -21,65 +68,44 @@ generate_test_file() {
 
     case $size in
         xs)
-            num_points=5
-            ;;
-        s)
             num_points=25
             ;;
+        s)
+            num_points=125
+            ;;
         m)
-            num_points=100
+            num_points=500
             ;;
         l)
-            num_points=2500
+            num_points=12500
             ;;
         xl)
-            num_points=25000
+            num_points=125000
             ;;
         *)
             echo "Invalid size!"
             exit 1
     esac
 
-    a=1
-    b=$((a + max_range - 1))
-    
+    # Set constants for anchor points and generating iterations
+    local num_anchor_points=5
+    local generating_iterations=5
+
     test_file_path="./testdata/$range.$size.txt"
     expected_file_path="./testdata/expected/$range.$size.txt"
 
     > $test_file_path
     > $expected_file_path
 
-    # Calculate the average diameter of intervals
-    avg_diameter=$((max_range / num_points))
-    variability=$((avg_diameter)) # up to 100% of the average diameter
-
-    # Write the number of intervals first
-    echo $((2 + ($num_points - 2) * 2)) > $test_file_path
-    echo "1" > $expected_file_path
-
-    # Adjusting calculation for point1 and point2 using average diameter with variability
-    dia_variability1=$((RANDOM % (2 * variability + 1) - variability))
-    dia_adjusted1=$((avg_diameter + dia_variability1))
+    # Generate the anchor points
+    local anchors=$(generate_anchor_points $max_range $num_anchor_points)
     
-    point1=$((a + dia_adjusted1))
-    
-    dia_variability2=$((RANDOM % (2 * variability + 1) - variability))
-    dia_adjusted2=$((avg_diameter + dia_variability2))
-    
-    point2=$((b - dia_adjusted2))
-
-    echo "[$a,$point1]" >> $test_file_path
-    echo "[$point2,$b]" >> $test_file_path
-
-    for (( i=0; i<($num_points-2)*2; i++ )); do
-        dia_variability=$((RANDOM % (2 * variability + 1) - variability)) 
-        dia_adjusted=$((avg_diameter + dia_variability))
-        
-        a_i=$((RANDOM % (b - dia_adjusted - a + 1) + a))
-        b_i=$((a_i + dia_adjusted))
-
-        # Append to a new line for the test file
-        echo "[$a_i,$b_i]" >> $test_file_path
+    # Generate the covering intervals and write to the test file
+    for (( i=0; i<$generating_iterations; i++ )); do
+        local covering_intervals=$(generate_covering_intervals $max_range $num_points "$anchors")
+        for interval in $covering_intervals; do
+            echo "$interval" >> $test_file_path
+        done
     done
 
     echo "[$a,$b]" >> $expected_file_path
