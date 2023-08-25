@@ -14,7 +14,6 @@ import (
 
 func ReadIntervals(r io.Reader) ([]Interval, error) {
 	reader := bufio.NewReader(r)
-	var intervals []Interval
 
 	// Read the first line to get the number of intervals
 	line, _, err := reader.ReadLine()
@@ -25,6 +24,7 @@ func ReadIntervals(r io.Reader) ([]Interval, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing the number of intervals: %w", err)
 	}
+	intervals := make([]Interval, 0, numIntervals) // Preallocate memory
 
 	// Read each subsequent line as an interval
 	for i := 0; i < numIntervals; i++ {
@@ -32,25 +32,26 @@ func ReadIntervals(r io.Reader) ([]Interval, error) {
 		if err != nil {
 			if err == io.EOF {
 				log.Println("found EOF in read loop:", err)
-				break // end of the file reached
+				break
 			}
 			log.Println("found not EOF error in read loop:", err)
 			return nil, err
 		}
 
 		if len(line) == 0 {
-			break // no content line, end of manual input
+			break
 		}
 
 		if isPrefix {
-			// The line is too long, and we are only getting a fragment.
-			// This shouldn't happen as intervals should fit on one line.
 			return nil, errors.New("Encountered an unexpectedly long line for an interval.")
 		}
 
-		part := strings.TrimSpace(string(line))
-		intervalStr := strings.Trim(part, "[]")
+		intervalStr := strings.Trim(strings.TrimSpace(string(line)), "[]")
 		intervalPoints := strings.Split(intervalStr, ",")
+
+		if len(intervalPoints) != 2 {
+			return nil, fmt.Errorf("Invalid interval format for line: %s", string(line))
+		}
 
 		a, errA := strconv.Atoi(intervalPoints[0])
 		if errA != nil {
@@ -63,10 +64,6 @@ func ReadIntervals(r io.Reader) ([]Interval, error) {
 		}
 
 		intervals = append(intervals, Interval{a: int32(a), b: int32(b)})
-	}
-
-	if len(intervals) == 0 {
-		return nil, errors.New("read intervals: could not read any interval")
 	}
 
 	return intervals, nil
