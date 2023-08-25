@@ -49,28 +49,40 @@ generate_test_file() {
     > $test_file_path
     > $expected_file_path
 
-    # Guaranteeing at least one interval starts at a and one ends at b
-    point1=$((RANDOM % (b - a + 1) + a))
-    point2=$((RANDOM % (b - a + 1) + a))
-    printf "[%d,%d] [%d,%d] " $a $point1 $point2 $b >> $test_file_path
+    # Calculate the average diameter of intervals
+    avg_diameter=$((max_range / num_points))
+    variability=$((avg_diameter)) # up to 100% of the average diameter
 
-    for (( i=0; i<$num_points-2; i++ )); do
-        point=$((RANDOM % (b - a + 1) + a))
-        
-        a_i=$((RANDOM % (point - a + 1) + a))
-        b_i=$((RANDOM % (b - point + 1) + point))
+    # Write the number of intervals first
+    echo $((2 + ($num_points - 2) * 2)) > $test_file_path
+    echo "1" > $expected_file_path
 
-        a_i_next=$((RANDOM % (point - a + 1) + a))
-        b_i_next=$((RANDOM % (b - point + 1) + point))
+    # Adjusting calculation for point1 and point2 using average diameter with variability
+    dia_variability1=$((RANDOM % (2 * variability + 1) - variability))
+    dia_adjusted1=$((avg_diameter + dia_variability1))
+    
+    point1=$((a + dia_adjusted1))
+    
+    dia_variability2=$((RANDOM % (2 * variability + 1) - variability))
+    dia_adjusted2=$((avg_diameter + dia_variability2))
+    
+    point2=$((b - dia_adjusted2))
+
+    echo "[$a,$point1]" >> $test_file_path
+    echo "[$point2,$b]" >> $test_file_path
+
+    for (( i=0; i<($num_points-2)*2; i++ )); do
+        dia_variability=$((RANDOM % (2 * variability + 1) - variability)) 
+        dia_adjusted=$((avg_diameter + dia_variability))
         
-        # Append to the same line for the test file
-        printf "[%d,%d] [%d,%d] " $a_i $b_i $a_i_next $b_i_next >> $test_file_path
+        a_i=$((RANDOM % (b - dia_adjusted - a + 1) + a))
+        b_i=$((a_i + dia_adjusted))
+
+        # Append to a new line for the test file
+        echo "[$a_i,$b_i]" >> $test_file_path
     done
 
-    # Add newline to the end of the test file
-    echo "" >> $test_file_path
-
-    echo "[$a,$b]" > $expected_file_path
+    echo "[$a,$b]" >> $expected_file_path
 }
 
 # Call the function
