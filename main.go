@@ -40,8 +40,7 @@ func main() {
 	}
 
 	// Merge overlapping intervals using sort and merge.
-	// TODO: ask if it is important that the function is called exactly "MERGE"
-	merged := mergeBySort(intervals)
+	merged := MergeBySort(intervals)
 
 	// Output to stdout using Stringer of Intervals
 	fmt.Println(Intervals(merged))
