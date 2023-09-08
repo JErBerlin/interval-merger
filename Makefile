@@ -2,6 +2,9 @@
 
 .PHONY: generate_tests test benchmark benchmem build run
 
+# default target generates tests if not existing and run those tests
+all: generate_tests test
+
 generate_tests: 
 	# Generate some test files to run the end to end tests and benchmarks
 	@test -f ./testdata/low.xs.txt || ./generate_tests.sh low xs
@@ -12,12 +15,15 @@ generate_tests:
 	@test -f ./testdata/high.xl.txt || ./generate_tests.sh high xl
 
 test:
+	# Run end to end tests
 	@go test
 
 benchmark:
+	# Run performance benchmarks
 	@go test -bench .
 
 benchmem:
+	# Run memory benchmarks
 	@go test -bench=. -benchmem
 
 build:
